@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dinâmica UpCities 2027</title>
+<style>
+  :root {
+    --azul: #1f4e79;
+    --azul-claro: #e8f0f8;
+    --cinza: #5b6670;
+    --cinza-claro: #f3f5f7;
+    --destaque: #e07a1f;
+    --branco: #ffffff;
+    --texto: #1d2630;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--cinza-claro);
+    color: var(--texto);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--azul);
+    color: var(--branco);
+    padding: 20px 24px;
+  }
+  header h1 { margin: 0 0 4px; font-size: 1.5rem; }
+  header p { margin: 0; opacity: .9; font-size: .95rem; }
+  nav {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 12px 24px; background: var(--branco);
+    border-bottom: 1px solid #dde3ea; position: sticky; top: 0; z-index: 5;
+  }
+  nav button {
+    border: 1px solid var(--azul); background: var(--branco); color: var(--azul);
+    padding: 8px 12px; border-radius: 999px; cursor: pointer; font-size: .9rem;
+  }
+  nav button.ativo { background: var(--azul); color: var(--branco); }
+  main { max-width: 960px; margin: 0 auto; padding: 24px; }
+  section { display: none; animation: entrar .35s ease; }
+  section.ativa { display: block; }
+  @keyframes entrar { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  h2 { color: var(--azul); margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--branco); border: 1px solid #dde3ea; border-radius: 12px;
+    padding: 16px; cursor: pointer; transition: border-color .2s, box-shadow .2s;
+  }
+  .card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+  .card.selecionado { border: 2px solid var(--destaque); box-shadow: 0 2px 12px rgba(224,122,31,.2); }
+  .card h3 { margin: 0 0 6px; font-size: 1.05rem; color: var(--azul); }
+  .card p { margin: 6px 0 0; font-size: .92rem; color: var(--cinza); }
+  .etapas { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 8px 0; font-size: .82rem; }
+  .etapas span { background: var(--azul-claro); color: var(--azul); padding: 3px 8px; border-radius: 6px; }
+  .etapas i { color: var(--cinza); font-style: normal; }
+  .box {
+    background: var(--branco); border: 1px solid #dde3ea; border-radius: 12px;
+    padding: 18px; margin-top: 16px;
+  }
+  .video-box {
+    background: #0f1b26; color: var(--branco); border-radius: 12px;
+    padding: 28px; text-align: center; margin: 16px 0;
+  }
+  .video-box p { margin: 6px 0; }
+  .video-box .aviso { font-size: .85rem; opacity: .75; }
+  .video-box iframe, .video-box video { width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 8px; }
+  label { display: block; font-weight: 600; margin: 12px 0 4px; font-size: .95rem; }
+  input[type="text"], textarea {
+    width: 100%; padding: 10px; border: 1px solid #c9d2dc; border-radius: 8px;
+    font: inherit; background: var(--branco);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .btn {
+    background: var(--azul); color: var(--branco); border: 0; border-radius: 8px;
+    padding: 10px 16px; font-size: .95rem; cursor: pointer; margin: 6px 6px 6px 0;
+  }
+  .btn.secundario { background: var(--branco); color: var(--azul); border: 1px solid var(--azul); }
+  .btn.perigo { background: #b03a2e; }
+  .tag {
+    display: inline-block; font-size: .75rem; padding: 2px 8px; border-radius: 999px;
+    background: var(--destaque); color: var(--branco); margin-left: 6px; vertical-align: middle;
+  }
+  .tag.sec { background: var(--cinza); }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e3e8ee; vertical-align: top; }
+  th { color: var(--azul); }
+  .semanas { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .semanas label { margin: 0 0 2px; font-size: .85rem; color: var(--cinza); font-weight: 600; }
+  .nota {
+    font-size: .85rem; color: var(--cinza); background: #fff8ef;
+    border-left: 3px solid var(--destaque); padding: 10px 12px; border-radius: 6px; margin: 12px 0;
+  }
+  .resumo h3 { color: var(--azul); margin-bottom: 4px; }
+  .resumo ul { margin-top: 4px; }
+  @media print {
+    nav, .no-print { display: none !important; }
+    section { display: block !important; animation: none; }
+    body { background: #fff; }
+    .box { border: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dinâmica UpCities 2027</h1>
+  <p>Escolha do funil, do arquétipo da marca e do planejamento do próximo ano.</p>
+</header>
+
+<nav class="no-print">
+  <button data-alvo="etapa1" class="ativo">1. Funil</button>
+  <button data-alvo="etapa2">2. Arquétipo</button>
+  <button data-alvo="etapa3">3. Datas 2027</button>
+  <button data-alvo="etapa4">4. Trimestres</button>
+  <button data-alvo="resumo">Resumo</button>
+</nav>
+
+<main>
+
+  <!-- ETAPA 1 -->
+  <section id="etapa1" class="ativa">
+    <h2>Etapa 1: Entender os funis e escolher o melhor</h2>
+    <p>Leiam os oito modelos e escolham o que faz mais sentido para a UpCities. Cada modelo é um framework didático de marketing, não uma regra fixa.</p>
+    <div class="grid" id="gradeFunis"></div>
+    <div class="box">
+      <label for="justificativaFunil">Por que este funil? (escrevam em conjunto)</label>
+      <textarea id="justificativaFunil" placeholder="Ex.: o ciclo de decisão do gestor público é longo e envolve várias áreas..."></textarea>
+    </div>
+    <div class="nota">
+      <strong>Fontes:</strong> AIDA (atribuído a E. St. Elmo Lewis e popularizado por Edward K. Strong Jr., 1925; a origem é debatida na literatura). AARRR (Dave McClure, 500 Startups). ZMOT (Google, 2011, ebook <em>Winning the Zero Moment of Truth</em>). Os demais modelos são nomenclatura usual de mercado.
+    </div>
+  </section>
+
+  <!-- ETAPA 2 -->
+  <section id="etapa2">
+    <h2>Etapa 2: Entender e definir o arquétipo dominante e o secundário</h2>
+    <div class="box">
+      <h3>Vídeo de apresentação</h3>
+      <p>O vídeo é apresentado pelo facilitador. Aguardem o momento de apertar play. Quando o vídeo terminar, avancem para a escolha dos arquétipos.</p>
+      <div class="video-box" id="boxVideo">
+        <p><strong>Vídeo: Arquétipos de marca</strong></p>
+        <p class="aviso" id="avisoVideo">Ainda não há vídeo configurado. Cole o link do YouTube ou o arquivo no campo abaixo.</p>
+        <div id="areaVideo"></div>
+      </div>
+      <label for="linkVideo">Link do vídeo (YouTube ou Vimeo, opcional)</label>
+      <input type="text" id="linkVideo" placeholder="https://www.youtube.com/watch?v=...">
+      <button class="btn secundario no-print" id="btnCarregarVideo">Carregar vídeo</button>
+    </div>
+
+    <div class="box">
+      <h3>Escolham o arquétipo dominante e o secundário</h3>
+      <p class="nota">Descrições didáticas baseadas no modelo de Carol S. Pearson e Margaret Mark (<em>O Herói e o Fora-da-Lei</em>). Conferir os textos com o livro antes de apresentar como referência oficial.</p>
+      <div class="grid" id="gradeArquetipos"></div>
+      <p><strong>Dominante:</strong> <span id="escDominante">nenhum</span> &nbsp; <strong>Secundário:</strong> <span id="escSecundario">nenhum</span></p>
+      <label for="justificativaArq">Por que estes arquétipos? (escrevam em conjunto)</label>
+      <textarea id="justificativaArq"></textarea>
+    </div>
+  </section>
+
+  <!-- ETAPA 3 -->
+  <section id="etapa3">
+    <h2>Etapa 3: Ideias de planejamento para 2027</h2>
+    <p>Datas importantes no Brasil, com foco no setor público. Usem as datas como gatilhos para temas e campanhas.</p>
+    <table>
+      <thead><tr><th>Data (2027)</th><th>Evento</th><th>Relação com o setor público</th><th>Ideia para a marca</th></tr></thead>
+      <tbody id="tabelaDatas"></tbody>
+    </table>
+    <div class="nota">
+      <strong>Verificação:</strong> Carnaval (9/fev/2027) e Páscoa (28/mar/2027) foram confirmados em fontes de imprensa. As demais datas fixas seguem a legislação de feriados nacionais. As móveis (Sexta-feira Santa e Corpus Christi) foram calculadas a partir da Páscoa. Confirmem tudo no <strong>gov.br</strong> e no calendário oficial antes de publicar. Dias comemorativos sem lei federal (Dia dos Professores, Dia do Servidor) devem ser conferidos nas datas indicadas.
+    </div>
+    <div class="box">
+      <label for="ideiasDatas">Ideias de planejamento (escrevam em conjunto)</label>
+      <textarea id="ideiasDatas" style="min-height:120px"></textarea>
+    </div>
+  </section>
+
+  <!-- ETAPA 4 -->
+  <section id="etapa4">
+    <h2>Etapa 4: Planejamento trimestral de 2027</h2>
+    <p>Para cada trimestre, definam o tema principal e os temas das semanas. Use as ideias da etapa anterior como base.</p>
+    <div id="trimestres"></div>
+  </section>
+
+  <!-- RESUMO -->
+  <section id="resumo" class="resumo">
+    <h2>Resumo da dinâmica</h2>
+    <div class="box" id="conteudoResumo"></div>
+    <div class="no-print">
+      <button class="btn" id="btnBaixarMd">Baixar resumo (.md)</button>
+      <button class="btn secundario" id="btnImprimir">Imprimir / salvar em PDF</button>
+      <button class="btn secundario" id="btnCopiar">Copiar texto</button>
+      <button class="btn perigo" id="btnLimpar">Limpar tudo</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ============================================================
+// DADOS. Edite aqui para ajustar textos e opções.
+// ============================================================
+
+const FUNIS = [
+  { id: "aida", nome: "Funil AIDA", etapas: ["Atenção", "Interesse", "Desejo", "Ação"],
+    uso: "Conversão direta, produtos de compra rápida e anúncios de performance." },
+  { id: "vendas", nome: "Funil de vendas tradicional", etapas: ["Topo: conscientização", "Meio: consideração", "Fundo: decisão"],
+    uso: "Vendas B2B e ciclos longos, com necessidade de nutrição." },
+  { id: "jornada", nome: "Jornada do cliente", etapas: ["Descoberta", "Consideração", "Avaliação", "Compra", "Pós-venda"],
+    uso: "Decisões complexas, com vários pontos de contato e múltiplas áreas envolvidas." },
+  { id: "aarrr", nome: "AARRR (Pirate Metrics)", etapas: ["Aquisição", "Ativação", "Retenção", "Receita", "Referência"],
+    uso: "SaaS, apps e produtos com foco em crescimento e recorrência." },
+  { id: "remarketing", nome: "Funil de remarketing", etapas: ["Visitou ou se cadastrou", "Não converteu", "Reimpacto", "Conversão"],
+    uso: "Quando já existe tráfego e a conversão precisa de reforço." },
+  { id: "conteudo", nome: "Funil de conteúdo (inbound)", etapas: ["Conteúdo de topo", "Conteúdo de meio", "Conteúdo de fundo"],
+    uso: "Estratégias que dependem de SEO, blog, e-books e autoridade." },
+  { id: "lancamento", nome: "Funil de lançamento", etapas: ["Captação", "Aquecimento", "Abertura", "Fechamento"],
+    uso: "Lançamentos com data definida, como um produto ou evento." },
+  { id: "viral", nome: "Funil viral / de indicação", etapas: ["Usuário satisfeito", "Convite", "Novo usuário", "Novo ciclo"],
+    uso: "Produtos com efeito de rede ou que se beneficiam de boca a boca." }
+];
+
+const ARQUETIPOS = [
+  { id: "inocente", nome: "Inocente", desc: "Pureza, otimismo e simplicidade. Busca segurança e felicidade." },
+  { id: "explorador", nome: "Explorador", desc: "Liberdade, descoberta e autonomia. Busca novas experiências." },
+  { id: "sabio", nome: "Sábio", desc: "Conhecimento, verdade e compreensão. Busca entender o mundo." },
+  { id: "heroi", nome: "Herói", desc: "Coragem, superação e prova de valor. Busca fazer a diferença." },
+  { id: "foralei", nome: "Fora da Lei (Rebelde)", desc: "Ruptura, liberdade e quebra de padrões. Busca mudança." },
+  { id: "mago", nome: "Mago", desc: "Transformação e visão. Busca realizar sonhos e criar soluções." },
+  { id: "cara_comum", nome: "Cara Comum", desc: "Pertencimento, realismo e igualdade. Busca ser parte de um grupo." },
+  { id: "amante", nome: "Amante", desc: "Paixão, conexão e prazer. Busca vínculos e experiências sensoriais." },
+  { id: "bobo", nome: "Bobo da Corte", desc: "Humor, leveza e alegria. Busca viver o momento." },
+  { id: "cuidador", nome: "Prestativo (Cuidador)", desc: "Cuidado, proteção e serviço. Busca ajudar o outro." },
+  { id: "criador", nome: "Criador", desc: "Inovação, expressão e criação. Busca construir algo duradouro." },
+  { id: "governante", nome: "Governante", desc: "Controle, ordem e liderança. Busca estabilidade e organização." }
+];
+
+const DATAS_2027 = [
+  ["01/jan (sex)", "Confraternização Universal", "Início do ciclo orçamentário e de gestão", "Planejamento de metas e prestação de contas do ano"],
+  ["09/fev (ter)", "Carnaval (ponto facultativo; folga depende de lei local)", "Órgãos públicos com expediente alterado", "Comunicação de serviços e funcionamento durante a folia"],
+  ["10/fev (qua)", "Quarta-feira de Cinzas", "Expediente parcial em muitos locais", "Lembrete de atendimento e canais digitais"],
+  ["26/mar (sex)", "Sexta-feira Santa (calculada a partir da Páscoa)", "Feriado nacional", "Conteúdo de cidadania e serviços de fim de semana prolongado"],
+  ["21/abr (qua)", "Tiradentes", "Feriado nacional", "Campanha sobre história e participação cívica"],
+  ["01/mai (sáb)", "Dia do Trabalho", "Feriado nacional", "Valorização de servidores e trabalhadores da gestão pública"],
+  ["09/mai (dom)", "Dia das Mães (2º domingo de maio)", "Data comemorativa", "Campanha de engajamento social e comunidade"],
+  ["27/mai (qui)", "Corpus Christi (calculado a partir da Páscoa)", "Ponto facultativo em muitos municípios", "Planejamento de eventos e agenda da cidade"],
+  ["12/jun (sáb)", "Dia dos Namorados", "Data comercial", "Conteúdo leve sobre cidades e vida urbana"],
+  ["07/set (ter)", "Independência do Brasil", "Feriado nacional", "Campanha de identidade e orgulho da cidade"],
+  ["15/out (sex)", "Dia do Professor", "Data comemorativa", "Conteúdo sobre educação e gestão escolar"],
+  ["12/out (ter)", "Nossa Senhora Aparecida (padroeira)", "Feriado nacional", "Conteúdo de tradição e comunidade local"],
+  ["28/out (qui)", "Dia do Servidor Público", "Data comemorativa para o setor público", "Reconhecimento de equipes e servidores (campanha forte para a marca)"],
+  ["02/nov (ter)", "Finados", "Feriado nacional", "Conteúdo de serviços cemitérios e cidadania"],
+  ["15/nov (seg)", "Proclamação da República", "Feriado nacional", "Campanha sobre democracia e participação"],
+  ["20/nov (sáb)", "Dia da Consciência Negra", "Feriado nacional", "Conteúdo de diversidade e inclusão nas cidades"],
+  ["25/dez (sáb)", "Natal", "Feriado nacional", "Balanço do ano e retrospectiva"]
+];
+
+const TRIMESTRES = [
+  { id: "t1", nome: "1º trimestre (jan a mar)", semanas: 13 },
+  { id: "t2", nome: "2º trimestre (abr a jun)", semanas: 13 },
+  { id: "t3", nome: "3º trimestre (jul a set)", semanas: 13 },
+  { id: "t4", nome: "4º trimestre (out a dez)", semanas: 13 }
+];
+
+// ============================================================
+// ESTADO. Salvo no navegador (localStorage) para não perder nada se a página recarregar.
+// ============================================================
+
+const CHAVE = "dinamica-upcities-2027";
+let estado = {
+  funilEscolhido: null,
+  justificativaFunil: "",
+  video: "",
+  dominante: null,
+  secundario: null,
+  justificativaArq: "",
+  ideiasDatas: "",
+  trimestres: {}
+};
+
+function salvar() {
+  try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) {}
+}
+function carregar() {
+  try {
+    const dados = JSON.parse(localStorage.getItem(CHAVE));
+    if (dados) estado = Object.assign(estado, dados);
+  } catch (e) {}
+}
+
+// ============================================================
+// RENDERIZAÇÃO
+// ============================================================
+
+function renderFunis() {
+  const grade = document.getElementById("gradeFunis");
+  grade.innerHTML = "";
+  FUNIS.forEach(f => {
+    const div = document.createElement("div");
+    div.className = "card" + (estado.funilEscolhido === f.id ? " selecionado" : "");
+    div.innerHTML = `
+      <h3>${f.nome}</h3>
+      <div class="etapas">${f.etapas.map((e, i) => `<span>${e}</span>${i < f.etapas.length - 1 ? "<i>→</i>" : ""}`).join("")}</div>
+      <p>${f.uso}</p>`;
+    div.onclick = () => { estado.funilEscolhido = f.id; salvar(); renderFunis(); };
+    grade.appendChild(div);
+  });
+  document.getElementById("justificativaFunil").value = estado.justificativaFunil;
+}
+
+function renderArquetipos() {
+  const grade = document.getElementById("gradeArquetipos");
+  grade.innerHTML = "";
+  ARQUETIPOS.forEach(a => {
+    const div = document.createElement("div");
+    let tags = "";
+    if (estado.dominante === a.id) tags += '<span class="tag">Dominante</span>';
+    if (estado.secundario === a.id) tags += '<span class="tag sec">Secundário</span>';
+    div.className = "card" + (estado.dominante === a.id || estado.secundario === a.id ? " selecionado" : "");
+    div.innerHTML = `<h3>${a.nome}${tags}</h3><p>${a.desc}</p>`;
+    div.onclick = () => escolherArquetipo(a.id);
+    grade.appendChild(div);
+  });
+  const nomeDe = id => (ARQUETIPOS.find(a => a.id === id) || {}).nome || "nenhum";
+  document.getElementById("escDominante").textContent = nomeDe(estado.dominante);
+  document.getElementById("escSecundario").textContent = nomeDe(estado.secundario);
+  document.getElementById("justificativaArq").value = estado.justificativaArq;
+}
+
+// Primeiro clique define o dominante, o segundo define o secundário, o terceiro reinicia.
+function escolherArquetipo(id) {
+  if (!estado.dominante || (estado.dominante && estado.secundario)) {
+    estado.dominante = id;
+    estado.secundario = null;
+  } else if (estado.dominante === id) {
+    estado.dominante = null;
+  } else if (estado.secundario === id) {
+    estado.secundario = null;
+  } else {
+    estado.secundario = id;
+  }
+  salvar();
+  renderArquetipos();
+}
+
+function renderDatas() {
+  const corpo = document.getElementById("tabelaDatas");
+  corpo.innerHTML = DATAS_2027.map(d => `<tr><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]}</td><td>${d[3]}</td></tr>`).join("");
+  document.getElementById("ideiasDatas").value = estado.ideiasDatas;
+}
+
+function renderTrimestres() {
+  const area = document.getElementById("trimestres");
+  area.innerHTML = "";
+  TRIMESTRES.forEach(t => {
+    const dados = estado.trimestres[t.id] || { tema: "", semanas: [] };
+    const bloco = document.createElement("div");
+    bloco.className = "box";
+    let semanasHtml = "";
+    for (let i = 0; i < t.semanas; i++) {
+      const valor = (dados.semanas[i] || "").replace(/"/g, "&quot;");
+      semanasHtml += `<div><label for="${t.id}-s${i}">Semana ${i + 1}</label><input type="text" id="${t.id}-s${i}" data-trim="${t.id}" data-sem="${i}" value="${valor}" placeholder="Tema da semana"></div>`;
+    }
+    bloco.innerHTML = `
+      <h3>${t.nome}</h3>
+      <label for="${t.id}-tema">Tema principal do trimestre</label>
+      <input type="text" id="${t.id}-tema" data-tema="${t.id}" value="${(dados.tema || "").replace(/"/g, "&quot;")}" placeholder="Ex.: Transparência e serviços ao cidadão">
+      <div class="semanas" style="margin-top:12px">${semanasHtml}</div>`;
+    area.appendChild(bloco);
+  });
+
+  // Salva ao digitar
+  area.querySelectorAll("input[data-tema]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const id = inp.dataset.tema;
+      estado.trimestres[id] = estado.trimestres[id] || { tema: "", semanas: [] };
+      estado.trimestres[id].tema = inp.value;
+      salvar();
+    });
+  });
+  area.querySelectorAll("input[data-trim]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const id = inp.dataset.trim;
+      const i = parseInt(inp.dataset.sem, 10);
+      estado.trimestres[id] = estado.trimestres[id] || { tema: "", semanas: [] };
+      estado.trimestres[id].semanas[i] = inp.value;
+      salvar();
+    });
+  });
+}
+
+// ============================================================
+// VÍDEO. O facilitador dá o play. Só carrega quando o link é colado e o botão é clicado.
+// ============================================================
+
+function carregarVideo() {
+  const link = document.getElementById("linkVideo").value.trim();
+  estado.video = link;
+  salvar();
+  const area = document.getElementById("areaVideo");
+  area.innerHTML = "";
+  if (!link) {
+    document.getElementById("avisoVideo").style.display = "";
+    return;
+  }
+  document.getElementById("avisoVideo").style.display = "none";
+  let embed = null;
+  const yt = link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+  const vm = link.match(/vimeo\.com\/(\d+)/);
+  if (yt) embed = `https://www.youtube.com/embed/${yt[1]}`;
+  if (vm) embed = `https://player.vimeo.com/video/${vm[1]}`;
+  if (embed) {
+    area.innerHTML = `<iframe src="${embed}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  } else {
+    area.innerHTML = `<video controls src="${link.replace(/"/g, "&quot;")}"></video>`;
+  }
+}
+
+// ============================================================
+// RESUMO
+// ============================================================
+
+function montarResumo() {
+  const f = FUNIS.find(x => x.id === estado.funilEscolhido);
+  const nomeArq = id => (ARQUETIPOS.find(a => a.id === id) || {}).nome || "não definido";
+  const trimestresHtml = TRIMESTRES.map(t => {
+    const d = estado.trimestres[t.id] || { tema: "", semanas: [] };
+    const semanas = Array.from({ length: t.semanas }, (_, i) => d.semanas[i] ? `<li>Semana ${i + 1}: ${escapar(d.semanas[i])}</li>` : "").join("");
+    return `<h3>${t.nome}</h3><p><strong>Tema:</strong> ${escapar(d.tema || "não definido")}</p>${semanas ? `<ul>${semanas}</ul>` : "<p><em>Sem temas semanais preenchidos.</em></p>"}`;
+  }).join("");
+
+  document.getElementById("conteudoResumo").innerHTML = `
+    <h3>1. Funil escolhido</h3>
+    <p><strong>${f ? f.nome : "não definido"}</strong></p>
+    <p>${escapar(estado.justificativaFunil) || "<em>Sem justificativa.</em>"}</p>
+    <h3>2. Arquétipos</h3>
+    <p><strong>Dominante:</strong> ${nomeArq(estado.dominante)} &nbsp; <strong>Secundário:</strong> ${nomeArq(estado.secundario)}</p>
+    <p>${escapar(estado.justificativaArq) || "<em>Sem justificativa.</em>"}</p>
+    <h3>3. Ideias para 2027</h3>
+    <p>${escapar(estado.ideiasDatas).replace(/\n/g, "<br>") || "<em>Sem ideias registradas.</em>"}</p>
+    <h3>4. Planejamento de 2027</h3>
+    ${trimestresHtml}`;
+}
+
+function escapar(texto) {
+  return String(texto || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function gerarMarkdown() {
+  const f = FUNIS.find(x => x.id === estado.funilEscolhido);
+  const nomeArq = id => (ARQUETIPOS.find(a => a.id === id) || {}).nome || "não definido";
+  let md = "# Dinâmica UpCities 2027: resumo\n\n";
+  md += `## 1. Funil escolhido\n\n**${f ? f.nome : "não definido"}**\n\n${estado.justificativaFunil || "Sem justificativa."}\n\n`;
+  md += `## 2. Arquétipos\n\n- Dominante: ${nomeArq(estado.dominante)}\n- Secundário: ${nomeArq(estado.secundario)}\n\n${estado.justificativaArq || "Sem justificativa."}\n\n`;
+  md += `## 3. Ideias de planejamento para 2027\n\n${estado.ideiasDatas || "Sem ideias registradas."}\n\n`;
+  md += `## 4. Planejamento trimestral de 2027\n\n`;
+  TRIMESTRES.forEach(t => {
+    const d = estado.trimestres[t.id] || { tema: "", semanas: [] };
+    md += `### ${t.nome}\n\n**Tema principal:** ${d.tema || "não definido"}\n\n`;
+    for (let i = 0; i < t.semanas; i++) {
+      if (d.semanas[i]) md += `- Semana ${i + 1}: ${d.semanas[i]}\n`;
+    }
+    md += "\n";
+  });
+  return md;
+}
+
+// ============================================================
+// EVENTOS
+// ============================================================
+
+document.querySelectorAll("nav button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("ativo"));
+    btn.classList.add("ativo");
+    document.querySelectorAll("section").forEach(s => s.classList.remove("ativa"));
+    document.getElementById(btn.dataset.alvo).classList.add("ativa");
+    if (btn.dataset.alvo === "resumo") montarResumo();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+
+document.getElementById("justificativaFunil").addEventListener("input", e => { estado.justificativaFunil = e.target.value; salvar(); });
+document.getElementById("justificativaArq").addEventListener("input", e => { estado.justificativaArq = e.target.value; salvar(); });
+document.getElementById("ideiasDatas").addEventListener("input", e => { estado.ideiasDatas = e.target.value; salvar(); });
+document.getElementById("btnCarregarVideo").addEventListener("click", carregarVideo);
+
+document.getElementById("btnBaixarMd").addEventListener("click", () => {
+  const blob = new Blob([gerarMarkdown()], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "resumo-dinamica-upcities-2027.md";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("btnImprimir").addEventListener("click", () => window.print());
+
+document.getElementById("btnCopiar").addEventListener("click", () => {
+  navigator.clipboard.writeText(gerarMarkdown()).then(
+    () => alert("Resumo copiado."),
+    () => alert("Não foi possível copiar automaticamente. Use o download .md.")
+  );
+});
+
+document.getElementById("btnLimpar").addEventListener("click", () => {
+  if (!confirm("Apagar todas as escolhas e textos desta dinâmica?")) return;
+  estado = { funilEscolhido: null, justificativaFunil: "", video: "", dominante: null, secundario: null, justificativaArq: "", ideiasDatas: "", trimestres: {} };
+  salvar();
+  location.reload();
+});
+
+// ============================================================
+// INÍCIO
+// ============================================================
+carregar();
+renderFunis();
+renderArquetipos();
+renderDatas();
+renderTrimestres();
+if (estado.video) {
+  document.getElementById("linkVideo").value = estado.video;
+  carregarVideo();
+}
+</script>
+</body>
+</html>
